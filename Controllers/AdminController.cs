@@ -59,13 +59,13 @@ namespace UserRegistrationApi.Controllers
             await _db.SaveChangesAsync();
 
             // Find Camunda task related to this registration
-            //var tasksJson = await camunda.GetTasksAsync();
+            var tasksJson = await camunda.GetTasksAsync();
             // TODO: Filter task by registrationId (custom logic: query variables)
 
             // For demo, assume we know taskId (later we implement variable query)
-            //string taskId = "<task-id-from-query>";
+            string taskId = "<task-id-from-query>";
 
-            //await camunda.CompleteTaskAsync(taskId, dto.IsApproved);
+            await camunda.CompleteTaskAsync(taskId, dto.IsApproved);
 
 
             return Ok(new

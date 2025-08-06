@@ -28,7 +28,7 @@ namespace UserRegistrationApi.Controllers
             await _db.SaveChangesAsync();
 
             // Trigger Camunda process
-            //await camunda.StartProcessAsync(request.Id, request.Name);
+            await camunda.StartProcessAsync(request.Id, request.Name);
 
             return Ok(new { message = "Registration submitted successfully." });
         }
