@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Org.BouncyCastle.Crypto.Generators;
 using System.Text;
@@ -15,7 +16,7 @@ builder.Services.AddSwaggerGen();
 
 // Add MySQL
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseMySQL(builder.Configuration.GetConnectionString("DefaultConnection")));
+options.UseMySQL(builder.Configuration.GetConnectionString("DefaultConnection")!));
 
 // Add JWT Auth
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");

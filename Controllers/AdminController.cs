@@ -43,30 +43,47 @@ namespace UserRegistrationApi.Controllers
             return Ok(pending);
         }
 
-        // 3. Approve or Reject
+        // 3. Approve or Reject (with Camunda task filtering)
         [Authorize(Roles = "admin")]
         [HttpPost("approve-reject/{id}")]
-        public async Task<IActionResult> ApproveOrReject(int id, [FromBody] ApproveRejectDto dto, [FromServices] CamundaService camunda)
+        public async Task<IActionResult> ApproveOrReject(
+            int id,
+            [FromBody] ApproveRejectDto dto,
+            [FromServices] CamundaService camunda)
         {
             var registration = await _db.Registrations.FindAsync(id);
 
             if (registration == null)
                 return NotFound(new { message = "Registration not found" });
 
+            // Update registration status
             registration.Status = dto.IsApproved ? "Approved" : "Rejected";
             registration.ReviewedAt = DateTime.UtcNow;
-
             await _db.SaveChangesAsync();
 
-            // Find Camunda task related to this registration
-            var tasksJson = await camunda.GetTasksAsync();
-            // TODO: Filter task by registrationId (custom logic: query variables)
+            // Fetch tasks from Camunda
+            var tasks = await camunda.GetTasksAsync();
+            string? matchingTaskId = null;
 
-            // For demo, assume we know taskId (later we implement variable query)
-            string taskId = "<task-id-from-query>";
+            // Find task with matching registrationId variable
+            foreach (var task in tasks)
+            {
+                string taskId = task["id"];
+                var variables = await camunda.GetTaskVariablesAsync(taskId);
 
-            await camunda.CompleteTaskAsync(taskId, dto.IsApproved);
+                if (variables.ContainsKey("registrationId") &&
+                    Convert.ToInt32(variables["registrationId"]["value"]) == registration.Id)
+                {
+                    matchingTaskId = taskId;
+                    break;
+                }
+            }
 
+            if (matchingTaskId == null)
+                return NotFound(new { message = "No matching Camunda task found for this registration" });
+
+            // Complete task in Camunda
+            await camunda.CompleteTaskAsync(matchingTaskId, dto.IsApproved);
 
             return Ok(new
             {

@@ -17,22 +17,28 @@ namespace UserRegistrationApi.Controllers
             _db = db;
         }
 
+        // User submits registration and triggers Camunda workflow
         [Authorize(Roles = "user")]
         [HttpPost("submit")]
-        public async Task<IActionResult> SubmitRegistration([FromBody] UserRegistration request, [FromServices] CamundaService camunda)
+        public async Task<IActionResult> SubmitRegistration(
+            [FromBody] UserRegistration request,
+            [FromServices] CamundaService camunda)
         {
+            // Save registration data in DB
             request.Status = "Pending";
             request.SubmittedAt = DateTime.UtcNow;
 
             _db.Registrations.Add(request);
             await _db.SaveChangesAsync();
 
-            // Trigger Camunda process
+            // Trigger Camunda process with registrationId and name
             await camunda.StartProcessAsync(request.Id, request.Name);
 
-            return Ok(new { message = "Registration submitted successfully." });
+            return Ok(new
+            {
+                message = "Registration submitted successfully and workflow started.",
+                registrationId = request.Id
+            });
         }
-
-
     }
 }
