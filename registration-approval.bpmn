@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+	<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+                  xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+                  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+                  xmlns:camunda="http://camunda.org/schema/1.0/bpmn"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  id="Definitions_1"
+                  targetNamespace="http://bpmn.io/schema/bpmn">
+
+  <bpmn:process id="registration-approval"
+                name="Registration Approval Process"
+                isExecutable="true"
+                camunda:historyTimeToLive="7">
+
+
+    <!-- Start Event -->
+    <bpmn:startEvent id="StartEvent_Registration" name="Registration Submitted">
+      <bpmn:outgoing>Flow_To_ApprovalTask</bpmn:outgoing>
+    </bpmn:startEvent>
+
+    <!-- User Task: Admin Approval -->
+    <bpmn:userTask id="UserTask_AdminApproval" name="Admin Approve Registration" camunda:assignee="admin">
+      <bpmn:incoming>Flow_To_ApprovalTask</bpmn:incoming>
+      <bpmn:outgoing>Flow_To_Gateway</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <!-- Sequence Flows -->
+    <bpmn:sequenceFlow id="Flow_To_ApprovalTask" sourceRef="StartEvent_Registration" targetRef="UserTask_AdminApproval" />
+    <bpmn:sequenceFlow id="Flow_To_Gateway" sourceRef="UserTask_AdminApproval" targetRef="Gateway_ApprovalDecision" />
+
+    <!-- Exclusive Gateway -->
+    <bpmn:exclusiveGateway id="Gateway_ApprovalDecision" name="Approved?">
+      <bpmn:incoming>Flow_To_Gateway</bpmn:incoming>
+      <bpmn:outgoing>Flow_Approved</bpmn:outgoing>
+      <bpmn:outgoing>Flow_Rejected</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+
+    <!-- End Events -->
+    <bpmn:endEvent id="EndEvent_Approved" name="Registration Approved">
+      <bpmn:incoming>Flow_Approved</bpmn:incoming>
+    </bpmn:endEvent>
+
+    <bpmn:endEvent id="EndEvent_Rejected" name="Registration Rejected">
+      <bpmn:incoming>Flow_Rejected</bpmn:incoming>
+    </bpmn:endEvent>
+
+    <!-- Flows from Gateway -->
+    <bpmn:sequenceFlow id="Flow_Approved" sourceRef="Gateway_ApprovalDecision" targetRef="EndEvent_Approved">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression"><![CDATA[${approved == true}]]></bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+
+    <bpmn:sequenceFlow id="Flow_Rejected" sourceRef="Gateway_ApprovalDecision" targetRef="EndEvent_Rejected">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression"><![CDATA[${approved == false}]]></bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+
+  </bpmn:process>
+
+  <!-- Diagram Layout -->
+  <bpmndi:BPMNDiagram id="BPMNDiagram_Registration">
+    <bpmndi:BPMNPlane id="BPMNPlane_Registration" bpmnElement="registration-approval">
+      <bpmndi:BPMNShape id="StartEvent_Registration_di" bpmnElement="StartEvent_Registration">
+        <dc:Bounds x="150" y="100" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="UserTask_AdminApproval_di" bpmnElement="UserTask_AdminApproval">
+        <dc:Bounds x="250" y="80" width="120" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_ApprovalDecision_di" bpmnElement="Gateway_ApprovalDecision">
+        <dc:Bounds x="420" y="95" width="50" height="50"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EndEvent_Approved_di" bpmnElement="EndEvent_Approved">
+        <dc:Bounds x="550" y="60" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EndEvent_Rejected_di" bpmnElement="EndEvent_Rejected">
+        <dc:Bounds x="550" y="150" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_To_ApprovalTask_di" bpmnElement="Flow_To_ApprovalTask">
+        <di:waypoint x="186" y="118" />
+        <di:waypoint x="250" y="118" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_To_Gateway_di" bpmnElement="Flow_To_Gateway">
+        <di:waypoint x="370" y="118" />
+        <di:waypoint x="420" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Approved_di" bpmnElement="Flow_Approved">
+        <di:waypoint x="470" y="120" />
+        <di:waypoint x="550" y="78" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Rejected_di" bpmnElement="Flow_Rejected">
+        <di:waypoint x="470" y="120" />
+        <di:waypoint x="550" y="168" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
